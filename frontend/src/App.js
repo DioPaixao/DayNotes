@@ -9,28 +9,56 @@ import Notes from './components/Notes/index'
 import RadioButtons from './components/RadioButton';
 
 function App() {
-
+  const [ selectedValue, setSelectedValue ] = useState('all')
   const [ title, setTitle ] = useState('')
   const [ notes, setNotes ] = useState('')
   const [ allNotes, setAllNotes ] = useState([])
 
   useEffect(() => {
-    async function getAllNotes(){
-      const response = await api.get('/annotations',)
-
-      setAllNotes(response.data)
-    }
-
     getAllNotes()
   }, [])
+  
+  async function getAllNotes(){
+    const response = await api.get('/annotations',)
+    setAllNotes(response.data)
+  }
 
- async function handleDelete(id){
+  async function loadNotes(option){
+    const params = { priority: option };
+    const response = await api.get('/priorities', { params })
+
+    if(response){
+      setAllNotes(response.data)
+    }
+  }
+
+  function handleChange(e){
+    setSelectedValue(e.value)
+
+    if(e.checked && e.value !== 'all'){
+      loadNotes(e.value)
+    }else{
+      getAllNotes()
+    }
+  }
+
+  async function handleDelete(id){
    const deletedNote = await api.delete(`/annotations/${id}`);
 
    if(deletedNote){
      setAllNotes(allNotes.filter(note => note._id !== id))
    }
  }
+
+  async function handleChangePriority(id){
+    const note = await api.post(`/priorities/${id}`)
+
+    if(note && selectedValue !== 'all'){
+      loadNotes(selectedValue)
+    }else if(note){
+      getAllNotes()
+    }
+  }
 
   async function handleSubmit(e){
     e.preventDefault() 
@@ -44,8 +72,12 @@ function App() {
     setTitle('')
     setNotes('')
 
-    setAllNotes([...allNotes, response.data])
-
+    if(selectedValue !== 'all'){
+      getAllNotes()
+    }else{
+      setAllNotes([...allNotes, response.data])
+    }
+    setSelectedValue('all')
   }
 
   useEffect(() => {
@@ -89,7 +121,10 @@ function App() {
           <button id="btn_submit" type="submit">Salvar</button>
         </form>
 
-        <RadioButtons />
+        <RadioButtons 
+          selectedValue={selectedValue}
+          handleChange={handleChange}
+        />
 
       </aside>
       
@@ -102,6 +137,7 @@ function App() {
               key={data._id}
               data={data} 
               handleDelete={handleDelete}
+                handleChangePriority={handleChangePriority}
             />
           ))}
         </ul>
