@@ -1,8 +1,9 @@
 //Dependencias
 const express = require('express');
-const app = express();
 const cors = require('cors')
 const routes = require('./routes');
+
+const app = express();
 
 require('dotenv').config();
 require('./config/dbConfig');// Conexão com o banco de dados: mongodb
